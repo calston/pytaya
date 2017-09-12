@@ -1,0 +1,1 @@
+from pytaya import ScopeGenProProtocol
