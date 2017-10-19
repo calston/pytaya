@@ -1,45 +1,41 @@
-import zlib, json
 
-from autobahn.twisted.websocket import WebSocketClientProtocol, \
-    WebSocketClientFactory, connectWS
+from __future__ import print_function
 
+from twisted.internet import task
 from twisted.internet.defer import Deferred, inlineCallbacks
+from twisted.internet.protocol import ClientFactory
+from twisted.protocols.basic import LineReceiver
 
-class ScopeGenProProtocol(WebSocketClientProtocol):
 
-    def __init__(self, *a, **kw):
-        WebSocketClientProtocol.__init__(self, *a, **kw)
+class PitayaClient(LineReceiver):
+    def connectionMade(self):
+        print("Connected")
+        self.factory.connectPipe(self)
 
-        self.params = {
-            "in_command": {"value": "send_all_params"}
-        }
+    def signalGeneratorReset(self):
+        self.sendLine(b"GEN:RST")
 
-    @inlineCallbacks
-    def onOpen(self):
-        yield self.sendMessage(json.dumps({"parameters": self.params}))
+    def lineReceived(self, line):
+        print("receive:", repr(line))
 
-    def streamRecv(self, signals):
-        pass
+    def disconnect(self):
+        self.transport.loseConnection()
 
-    def onMessage(self, payload, isBinary):
-        if isBinary:
-            q = payload
-            try:
-                t = zlib.decompress(q, 31)
-                t = json.loads(t)
-                params = t.get("parameters")
-                if params:
-                    if not self.params:
-                        # We need to be able to merge our desired defaults
-                        # on first connect. XXX Add this later XXX
-                        pass
-                    for q, v in params.items():
-                        self.params[q] = v
+class PitayaClientFactory(ClientFactory):
+    protocol = PitayaClient
 
-                signals = t.get('signals')
-                if signals:
-                    self.streamRecv(signals)
+    def __init__(self, parent):
+        self.connected = Deferred()
+        self.parent = parent
+        self.pipe = None
 
-            except Exception as e:
-                # Yeah this is pretty horrible
-                pass
+    def connectPipe(self, protocol):
+        self.pipe = protocol
+        self.connected.callback(protocol)
+
+    def clientConnectionFailed(self, connector, reason):
+        print('connection failed:', reason.getErrorMessage())
+        self.connected.errback(reason)
+
+    def clientConnectionLost(self, connector, reason):
+        print('connection lost:', reason.getErrorMessage())
