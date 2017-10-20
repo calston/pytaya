@@ -2,8 +2,6 @@ from twisted.internet.defer import Deferred, inlineCallbacks, returnValue
 from twisted.internet import reactor
 from twisted.python import log
 
-from autobahn.twisted.websocket import WebSocketClientProtocol, WebSocketClientFactory, connectWS
-
 from pytaya.protocol import PitayaClientFactory, PitayaClient
 from pytaya.utils import HTTPRequest
 
