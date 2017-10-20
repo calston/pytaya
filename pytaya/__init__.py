@@ -7,6 +7,8 @@ from autobahn.twisted.websocket import WebSocketClientProtocol, WebSocketClientF
 from pytaya.protocol import PitayaClientFactory, PitayaClient
 from pytaya.utils import HTTPRequest
 
+from pytaya.functions import OutputRF, InputRF
+
 
 class RedPitaya(object):
     def __init__(self, ip, port=5000):
@@ -14,6 +16,9 @@ class RedPitaya(object):
         self.port = port
         self.factory = None
         self.pipe = None
+
+        self.rf_out = OutputRF(self)
+        self.rf_in = InputRF(self)
 
     @inlineCallbacks
     def startApp(self):

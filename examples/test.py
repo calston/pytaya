@@ -10,29 +10,19 @@ from pytaya.utils import wait
 
 @inlineCallbacks
 def sine(r):
-    yield r.send(b"GEN:RST")
-    yield r.send(b"SOUR1:FUNC SINE")
-    yield r.send(b"SOUR1:FREQ:FIX 100000")
-    yield r.send(b"SOUR1:VOLT 1")
-    yield r.send(b"OUTPUT1:STATE ON")
+    yield r.rf_out.quick_sine(1, 100000, 1.0)
 
 @inlineCallbacks
 def read_fast(r):
-    yield r.send("ACQ:RST")
-    yield r.send("ACQ:DEC 1")
-    yield r.send("ACQ:TRIG:LEV 0")
-    yield r.send("ACQ:TRIG:DLY 0")
-    yield r.send("ACQ:START")
-    yield r.send("ACQ:TRIG CH1_PE")
+    yield r.rf_in.reset()
+    yield r.rf_in.set_decimation(1)
 
-    while 1:
-        response = yield r.send("ACQ:TRIG:STAT?", wait=True)
-        print response
-        if response == "TD":
-            break
+    yield r.rf_in.set_trigger_level(0)
+    yield r.rf_in.set_trigger_delay(0)
+    yield r.rf_in.start()
+    yield r.rf_in.set_trigger_pe(1)
 
-    print "Acquiring"
-    data = yield r.send("ACQ:SOUR1:DATA?", wait=True)
+    data = yield r.rf_in.get_trigger_data(1)
 
     print data
 
