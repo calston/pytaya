@@ -2,21 +2,51 @@
 from __future__ import print_function
 
 from twisted.internet import task
-from twisted.internet.defer import Deferred, inlineCallbacks
+from twisted.internet.defer import Deferred, inlineCallbacks, returnValue
 from twisted.internet.protocol import ClientFactory
 from twisted.protocols.basic import LineReceiver
 
 
 class PitayaClient(LineReceiver):
+    MAX_LENGTH = 134217728
+
     def connectionMade(self):
-        print("Connected")
+        self.commandQueue = []
+        self.waiting = False
+        self.received = []
         self.factory.connectPipe(self)
 
-    def signalGeneratorReset(self):
-        self.sendLine(b"GEN:RST")
+    @inlineCallbacks
+    def sendLine(self, line, wait=False):
+        if self.waiting:
+            if wait:
+                yield self.waiting
+                mine = yield self.sendLine(line, wait=wait)
+                returnValue(mine)
+            else:
+                self.commandQueue.append(line)
+                returnValue(None)
+        else:
+            if wait:
+                self.waiting = Deferred()
+            
+                t_ = yield LineReceiver.sendLine(self, line)
+
+                return_line = yield self.waiting
+                self.waiting = False
+                returnValue(return_line)
+            else:
+                t_ = yield LineReceiver.sendLine(self, line)
+                returnValue(t_)
 
     def lineReceived(self, line):
-        print("receive:", repr(line))
+        if self.waiting:
+            self.waiting.callback(line)
+            while self.commandQueue:
+                line = self.commandQueue.pop(0)
+                LineReceiver.sendLine(self, line)
+        else:
+            self.received.append(line)
 
     def disconnect(self):
         self.transport.loseConnection()

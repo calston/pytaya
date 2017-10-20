@@ -27,6 +27,10 @@ try:
 except:
     pass
 
+def wait(msecs):
+    d = defer.Deferred()
+    reactor.callLater(msecs/1000.0, d.callback, None)
+    return d
 
 class Timeout(Exception):
     """

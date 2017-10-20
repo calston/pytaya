@@ -33,11 +33,11 @@ class RedPitaya(object):
             print("Connection error %s" % str(e))
             returnValue(False)
 
-    def send(self, cmd):
+    def send(self, cmd, wait=False):
         if not self.pipe:
             raise Exception("Not connected")
             
-        return self.pipe.sendLine(cmd)
+        return self.pipe.sendLine(cmd, wait=wait)
 
     @inlineCallbacks
     def connect(self):
@@ -53,5 +53,4 @@ class RedPitaya(object):
 
     def shutdown(self):
         log.msg('Shutting down')
-        return self.stopApp('scopegenpro')
-
+        return self.stopApp()
