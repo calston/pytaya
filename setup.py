@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="pytaya",
-    version='0.1',
+    version='0.2',
     url='https://github.com/calston/pytaya',
     license='MIT',
     description="A Python library for controlling the RedPitaya remotely",
@@ -13,7 +13,6 @@ setup(
     include_package_data=True,
     install_requires=[
         'Twisted',
-        'autobahn',
     ],
     classifiers=[
         'License :: OSI Approved :: MIT License',
