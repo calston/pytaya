@@ -64,8 +64,10 @@ class PitayaClientFactory(ClientFactory):
         self.connected.callback(protocol)
 
     def clientConnectionFailed(self, connector, reason):
-        print('connection failed:', reason.getErrorMessage())
         self.connected.errback(reason)
+        self.connected = Deferred()
 
     def clientConnectionLost(self, connector, reason):
+        self.pipe = None
+        self.parent.pipe = None
         print('connection lost:', reason.getErrorMessage())

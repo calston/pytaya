@@ -77,6 +77,10 @@ class InputRF(Function):
     def reset(self):
         return self.r.send("ACQ:RST")
 
+    def set_units(self, raw=True):
+        return self.r.send("ACQ:GET:DATA:UNITS %s" % (
+                                raw and "RAW" or "VOLTS"))
+
     def set_averaging(self, avg):
         return self.r.send("ACQ:AVG %s" % (avg and "ON" or "OFF"))
 

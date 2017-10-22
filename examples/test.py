@@ -29,8 +29,6 @@ def read_fast(r):
 @inlineCallbacks
 def startup():
     r = RedPitaya('192.168.200.50', 5000)
-    yield r.connect()
-
     yield sine(r)
 
     yield read_fast(r)

@@ -1,9 +1,10 @@
-from twisted.internet.defer import Deferred, inlineCallbacks, returnValue
+from twisted.internet.defer import Deferred, inlineCallbacks, returnValue, waitForDeferred
+from twisted.internet.error import ConnectionRefusedError
 from twisted.internet import reactor
 from twisted.python import log
 
 from pytaya.protocol import PitayaClientFactory, PitayaClient
-from pytaya.utils import HTTPRequest
+from pytaya.utils import HTTPRequest, wait
 
 from pytaya.functions import OutputRF, InputRF
 
@@ -14,6 +15,10 @@ class RedPitaya(object):
         self.port = port
         self.factory = None
         self.pipe = None
+
+        self.connecting = False
+        self.reconnecting = False
+        self.started = False
 
         self.rf_out = OutputRF(self)
         self.rf_in = InputRF(self)
@@ -36,23 +41,47 @@ class RedPitaya(object):
             print("Connection error %s" % str(e))
             returnValue(False)
 
+    @inlineCallbacks
     def send(self, cmd, wait=False):
-        if not self.pipe:
-            raise Exception("Not connected")
-            
-        return self.pipe.sendLine(cmd, wait=wait)
+        pipe = yield self.getConnection()
+        yield pipe.sendLine(cmd, wait=wait)
 
     @inlineCallbacks
-    def connect(self):
+    def getConnection(self):
+        if self.connecting:
+            log.msg("Waiting for connection")
+            while not self.pipe:
+                yield wait(10)
+            defer.returnValue(self.pipe)
+
         if not self.factory:
-            started = yield self.startApp()
+            log.msg("Starting remote SCPI application")
+            self.connecting = True
 
-            if started:
-                self.factory = PitayaClientFactory(self)
+            self.started = True
+            while not self.started:
+                self.started = yield self.startApp()
+                if not self.started:
+                    yield wait(10)
 
-                reactor.connectTCP(self.ip, self.port, self.factory)
+            self.factory = PitayaClientFactory(self)
 
-                self.pipe = yield self.factory.connected
+        while not self.pipe:
+            self.connecting = True
+            log.msg("Connecting SCPI")
+            try:
+                yield reactor.connectTCP(self.ip, self.port, self.factory)
+                try:
+                    self.pipe = yield self.factory.connected
+                    self.connecting = False
+                except Exception as e:
+                    pass
+            except ConnectionRefusedError as e:
+                log.msg("Retrying in 1s...")
+
+            yield wait(1000)
+
+        returnValue(self.pipe)
 
     def shutdown(self):
         log.msg('Shutting down')
