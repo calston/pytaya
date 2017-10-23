@@ -44,13 +44,14 @@ class RedPitaya(object):
     @inlineCallbacks
     def send(self, cmd, wait=False):
         pipe = yield self.getConnection()
-        yield pipe.sendLine(cmd, wait=wait)
+        result = yield pipe.sendLine(cmd, wait=wait)
+        returnValue(result)
 
     @inlineCallbacks
     def getConnection(self):
         if self.connecting:
             log.msg("Waiting for connection")
-            while not self.pipe:
+            while self.connecting:
                 yield wait(10)
             defer.returnValue(self.pipe)
 
@@ -58,7 +59,6 @@ class RedPitaya(object):
             log.msg("Starting remote SCPI application")
             self.connecting = True
 
-            self.started = True
             while not self.started:
                 self.started = yield self.startApp()
                 if not self.started:
@@ -74,8 +74,9 @@ class RedPitaya(object):
                 try:
                     self.pipe = yield self.factory.connected
                     self.connecting = False
+                    returnValue(self.pipe)
                 except Exception as e:
-                    pass
+                    log.msg(str(e))
             except ConnectionRefusedError as e:
                 log.msg("Retrying in 1s...")
 

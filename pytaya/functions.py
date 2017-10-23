@@ -50,13 +50,14 @@ class InputRF(Function):
         st = time.time()
 	while 1:
 	    res = yield self.r.send("ACQ:TRIG:STAT?", wait=True)
+
 	    if res == response:
                 returnValue(True)
 
             if (time.time() - st) > timeout:
                 returnValue(None)
 
-            yield wait(20)
+            yield wait(100)
 
     @inlineCallbacks
     def get_trigger_data(self, channel, timeout=10):
