@@ -66,7 +66,8 @@ class InputRF(Function):
 
         if trig:
             data = yield self.get_channel_data(channel)
-            data = data.strip()[1:-1]
+
+            data = data.split('{')[1].split('}')[0]
 
             returnValue([float(v) for v in data.split(',')])
 

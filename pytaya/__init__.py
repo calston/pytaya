@@ -20,6 +20,15 @@ class RedPitaya(object):
         self.reconnecting = False
         self.started = False
 
+        self.decimation = [
+            (1, 125000000, 0.000131072),
+            (8, 15600000, 0.001049),
+            (64, 1900000, 0.008389),
+            (1024, 122000000, 0.134218),
+            (8192, 15200, 1.074),
+            (65536, 7600, 8.590),
+        ]
+
         self.rf_out = OutputRF(self)
         self.rf_in = InputRF(self)
 
