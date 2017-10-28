@@ -21,12 +21,14 @@ class RedPitaya(object):
         self.started = False
 
         self.decimation = [
-            (1, 125000000, 0.000131072),
-            (8, 15600000, 0.001049),
-            (64, 1900000, 0.008389),
+            (1,    125000000, 0.000131072),
+            (8,     15600000, 0.001049),
+            (32,     3900000, 0.004194),
+            (64,     1900000, 0.008389),
+            (128,    1900000, 0.016777),
             (1024, 122000000, 0.134218),
-            (8192, 15200, 1.074),
-            (65536, 7600, 8.590),
+            (8192,     15200, 1.074),
+            (65536,     7600, 8.590),
         ]
 
         self.rf_out = OutputRF(self)
@@ -62,7 +64,7 @@ class RedPitaya(object):
             log.msg("Waiting for connection")
             while self.connecting:
                 yield wait(10)
-            defer.returnValue(self.pipe)
+            returnValue(self.pipe)
 
         if not self.factory:
             log.msg("Starting remote SCPI application")
