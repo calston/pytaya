@@ -57,7 +57,7 @@ class InputRF(Function):
             if (time.time() - st) > timeout:
                 returnValue(None)
 
-            yield wait(100)
+            yield wait(5)
 
     @inlineCallbacks
     def get_trigger_data(self, channel, timeout=10):
